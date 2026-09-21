@@ -1,3 +1,9 @@
+{% extends 'base.html' %}
+
+{% block title %}Lobby - The Gang{% endblock %}
+
+{% block content %}
+
 <h2>Game Lobby</h2>
 <a href="{% url 'create_game' %}">Host New Game</a>
 <hr>
@@ -12,3 +18,4 @@
     <li>No active games. Host one!</li>
 {% endfor %}
 </ul>
+{% endblock %}

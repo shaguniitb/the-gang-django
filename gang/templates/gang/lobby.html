@@ -1,0 +1,14 @@
+<h2>Game Lobby</h2>
+<a href="{% url 'create_game' %}">Host New Game</a>
+<hr>
+<ul>
+{% for room in rooms %}
+    <li>
+        <strong>{{ room.title }}</strong> - Host: {{ room.host.username }} 
+        ({{ room.player_count }}/10 players)
+        <a href="{% url 'game_detail' game_id=room.id %}">View</a>
+    </li>
+{% empty %}
+    <li>No active games. Host one!</li>
+{% endfor %}
+</ul>

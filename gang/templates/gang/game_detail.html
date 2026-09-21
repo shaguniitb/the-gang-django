@@ -1,0 +1,25 @@
+<h2>{{ room.title }}</h2>
+<p>Host: {{ room.host.username }} | Status: {{ room.get_status_display }}</p>
+
+<h3>Players ({{ room.player_count }}/10)</h3>
+<ul>
+    {% for p in room.players.all %}
+        <li>{{ p.user.username }} {% if p.user == room.host %}(Host){% endif %}</li>
+    {% endfor %}
+</ul>
+
+{% if not is_player and room.status == 'waiting' and room.player_count < 10 %}
+    <form method="post" action="{% url 'join_game' game_id=room.id %}">
+        {% csrf_token %}
+        <button type="submit">Join Game</button>
+    </form>
+{% endif %}
+
+{% if request.user == room.host and room.status == 'waiting' %}
+    <form method="post" action="{% url 'start_game' game_id=room.id %}">
+        {% csrf_token %}
+        <button type="submit" {% if not room.can_start %}disabled{% endif %}>
+            Start Game (Requires 4–10 players)
+        </button>
+    </form>
+{% endif %}

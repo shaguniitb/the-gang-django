@@ -7,24 +7,24 @@
     <div class="col-md-8 col-lg-6">
         <div class="card shadow">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
-                <h4 class="mb-0"><i class="bi bi-controller me-2"></i>{{ room.title|default:"Game Room" }}</h4>
+                <h4 class="mb-0"><i class="bi bi-controller me-2"></i>{{ game.title|default:"Game Room" }}</h4>
                 <span class="badge bg-light text-primary rounded-pill fs-6">
-                    {{ room.player_count }}/10 Players
+                    {{ game.players.count }}/10 Players
                 </span>
             </div>
             
             <div class="card-body p-4">
-                <h5 class="text-muted mb-3">Host: <strong>{{ room.host.profile.display_name }}</strong></h5>
+                <h5 class="text-muted mb-3">Host: <strong>{{ game.host.username }}</strong></h5>
                 
                 <div class="bg-light p-3 rounded mb-4 border">
                     <h6 class="border-bottom pb-2 mb-3">Players in Room</h6>
                     <ul class="list-group list-group-flush" id="player-list">
-                        {% for player in room.players.all %}
+                        {% for player in game.players.all %}
                             <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
                                 <span>
-                                    <i class="bi bi-person-fill text-secondary me-2"></i>{{ player.user.profile.display_name }}
+                                    <i class="bi bi-person-fill text-secondary me-2"></i>{{ player.username }}
                                 </span>
-                                {% if player.user == room.host %}
+                                {% if player == game.host %}
                                     <span class="badge bg-secondary"><i class="bi bi-star-fill me-1"></i>Host</span>
                                 {% endif %}
                             </li>
@@ -37,11 +37,11 @@
                 </div>
 
                 <div class="text-center">
-                    {% if request.user == room.host %}
+                    {% if request.user == game.host %}
                         <!-- Host Controls -->
-                        <form method="POST" action="{% url 'start_game' room.id %}">
+                        <form method="POST" action="{% url 'start_game' game.id %}">
                             {% csrf_token %}
-                            {% if room.player_count >= 4 and room.player_count <= 10 %}
+                            {% if game.players.count >= 4 and game.players.count <= 10 %}
                                 <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
                                     <i class="bi bi-play-circle-fill me-2"></i>Start Game
                                 </button>
@@ -50,25 +50,19 @@
                                     <i class="bi bi-play-circle-fill me-2"></i>Start Game
                                 </button>
                                 <div class="text-danger mt-2 small fw-semibold">
-                                    {% if room.player_count < 4 %}
-                                        Waiting for at least {{ room.players_needed }} more player(s) to start.
-                                    {% elif room.player_count > 10 %}
+                                    {% if game.players.count < 4 %}
+                                        Waiting for at least {{ 4|add:"-game.players.count" }} more player(s) to start.
+                                    {% elif game.players.count > 10 %}
                                         Too many players! Maximum 10 allowed.
                                     {% endif %}
                                 </div>
                             {% endif %}
                         </form>
-                    {% elif not is_player and room.status == 'waiting' %}
-                        <!-- Non-Player Join Button -->
-                        <form method="post" action="{% url 'join_game' game_id=room.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">Join Game</button>
-                        </form>
                     {% else %}
-                        <!-- Player Waiting View -->
+                        <!-- Non-Host View -->
                         <div class="d-flex justify-content-center align-items-center mt-3">
                             <div class="spinner-border text-primary spinner-border-sm me-3" role="status"></div>
-                            <span class="text-muted fw-semibold">Waiting for {{ room.host.profile.display_name }} to start the game...</span>
+                            <span class="text-muted fw-semibold">Waiting for {{game.id}} {{ game.host.profile.get_display_name }} to start the game...</span>
                         </div>
                     {% endif %}
                 </div>
@@ -80,6 +74,8 @@
 
 {% block extra_scripts %}
 <script>
+    // Auto-refresh the page every 5 seconds so users can see new players join.
+    // If you are using Django Channels (WebSockets), remove this and use your JS event listeners instead.
     setTimeout(function() {
         window.location.reload(1);
     }, 5000);

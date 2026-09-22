@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.views.decorators.http import require_POST
 from .models import GameRoom, RoomPlayer
 
 def signup_view(request):
@@ -22,13 +23,13 @@ def lobby_view(request):
     return render(request, 'gang/lobby.html', {'rooms': active_rooms})
 
 @login_required
+@require_POST
 def create_game_view(request):
-    if request.method == 'POST':
-        title = request.POST.get('title', f"{request.user.username}'s Game")
-        room = GameRoom.objects.create(title=title, host=request.user)
-        RoomPlayer.objects.create(room=room, user=request.user)
-        return redirect('game_detail', game_id=room.id)
-    return render(request, 'gang/create_game.html')
+    display_name = request.user.profile.get_display_name
+    title = request.POST.get('title', f"{display_name}'s Game")
+    room = GameRoom.objects.create(title=title, host=request.user)
+    RoomPlayer.objects.create(room=room, user=request.user)
+    return redirect('game_detail', game_id=room.id)
 
 @login_required
 def game_detail_view(request, game_id):

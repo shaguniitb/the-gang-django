@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class GameRoom(models.Model):
     STATUS_CHOICES = [
@@ -18,6 +20,10 @@ class GameRoom(models.Model):
 
     def can_start(self):
         return 4 <= self.player_count() <= 10 and self.status == 'waiting'
+
+    @property
+    def players_needed(self):
+        return max(0, 4 - self.player_count())
 
 class RoomPlayer(models.Model):
     room = models.ForeignKey(GameRoom, on_delete=models.CASCADE, related_name='players')
@@ -43,3 +49,14 @@ class Profile(models.Model):
     def get_display_name(self):
         """Returns the custom display name if it exists, otherwise defaults to the username."""
         return self.display_name if self.display_name else self.user.username
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Creates a Profile instance automatically whenever a new User is created."""
+    if created:
+        Profile.objects.create(user=instance, display_name=instance.username)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Ensures the Profile is saved whenever the User object is saved."""
+    instance.profile.save()

@@ -5,7 +5,15 @@
 {% block content %}
 
 <h2>Game Lobby</h2>
-<a href="{% url 'create_game' %}">Host New Game</a>
+
+
+<form action="{% url 'create_game' %}" method="POST" class="mb-4">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Host New Game
+    </button>
+</form>
+
 <hr>
 <ul>
 {% for room in rooms %}
